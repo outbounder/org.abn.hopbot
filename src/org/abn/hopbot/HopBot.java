@@ -43,19 +43,14 @@ public class HopBot extends BotContext
 	public void chatCreated(Chat c, boolean l)
 	{
 		c.addMessageListener(this);
-		try
-		{
-			c.sendMessage("greeting - "+this.connection.getUsername()+" - ");
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}
 	}
 
 	public void processMessage(Chat fromChat, Message msg)
 	{
-		if(msg.getBody() == "quit")
+		String body = msg.getBody();
+		String from = msg.getFrom();
+
+		if(body.equals("quit"))
 		{
 			this.connection.close();
 			return;
@@ -65,41 +60,36 @@ public class HopBot extends BotContext
 		try
 		{
 			InputSource inStream = new InputSource();
-			inStream.setCharacterStream(new StringReader(msg.getBody()));
+			inStream.setCharacterStream(new StringReader(body));
 			Document doc = this.domBuilder.parse(inStream);
 
-			if(msg.getFrom() != this.defaultTarget) // master is calling
+			OperationContext operation = this.parseOperation(doc.getFirstChild());
+			if(operation.id == null)
 			{
-				OperationContext operation = this.parseOperation(doc.getFirstChild());
-				if(operation.id == null)
-				{
-					System.out.println("could not recognize operation "+operation.toString());
-					return;
-				}
-
-				this.masters.put(operation.id, msg.getFrom()); // save from who is coming from
-
-				String depth = String.valueOf(Integer.parseInt(operation.args.get("value"))+1);
-				System.out.println("DEPTH CURRENT "+depth);
-				operation.args.put("value", depth);
-				if(this.defaultTarget != "endpoint")
-				{
-					this.connection.send(this.defaultTarget, operation.toString(), this);
-				}
-				else
-				{
-					OperationResultContext operationResult = this.createResult(operation);
-					operationResult.value = depth;
-					this.connection.send(msg.getFrom(), operationResult.toString(), this);
-				}
+				System.out.println("could not recognize operation "+operation.toString());
+				return;
 			}
-			else // slave is resuling
+
+			String depth = String.valueOf(Integer.parseInt(operation.args.get("value"))+1);
+			System.out.println("DEPTH CURRENT "+depth);
+			operation.args.put("value", depth);
+
+			if(!from.equals(this.defaultTarget))
 			{
-				OperationResultContext operationResult = this.parseOperationResult(doc.getFirstChild());
-				if(operationResult.id == null)
-					return;
-				String to = this.masters.get(operationResult.id);
-				this.connection.send(to, operationResult.toString(), this);
+				this.masters.put(operation.id, from);
+
+				operation.args.put("value", depth);
+				this.connection.send(this.defaultTarget, operation.toString(), this);
+			}
+			else
+			{
+				String master = this.masters.get(operation.id);
+				if(master != null)
+				{
+					OperationResultContext operationResult = this.parseOperationResult(doc.getFirstChild());
+					operationResult.value = depth;
+					this.connection.send(master, operationResult.toString(), this);
+				}
 			}
 		}
 		catch(Exception e)

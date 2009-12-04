@@ -1,6 +1,6 @@
 #Fat Jar Configuration File
-#Fri Dec 04 04:12:23 EET 2009
-onejar.license.required=false
+#Fri Dec 04 15:57:51 EET 2009
+onejar.license.required=true
 manifest.classpath=
 manifest.removesigners=true
 onejar.checkbox=false
