@@ -1,0 +1,14 @@
+#Fat Jar Configuration File
+#Fri Dec 04 04:12:23 EET 2009
+onejar.license.required=false
+manifest.classpath=
+manifest.removesigners=true
+onejar.checkbox=false
+jarname=hopbot_fat.jar
+manifest.mergeall=true
+manifest.mainclass=Main
+manifest.file=<createnew>
+jarname.isextern=false
+onejar.expand=
+excludes=
+includes=
